@@ -3,120 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
     <link rel="manifest" href="manifest.json">
-    <title>JS VPN</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#00ff88">
+    
+    <title>JS VPN PRO</title>
     <style>
-        :root { --bg: #080808; --panel: #121212; --accent: #00ff88; --text: #fff; }
+        :root { --bg: #080808; --panel: #121212; --accent: #00ff88; --premium: #f39c12; --text: #fff; }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); margin: 0; overflow: hidden; height: 100vh; }
         
-        .screen { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; transition: 0.5s; }
+        .screen { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; transition: 0.5s; background: var(--bg); z-index: 10; }
         .hidden { display: none !important; }
+
+        /* --- Auth Style --- */
+        .auth-input { width: 100%; padding: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 10px; margin-bottom: 10px; outline: none; }
+        .auth-input:focus { border-color: var(--accent); }
+        .btn { width: 100%; padding: 15px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .primary-btn { background: var(--accent); color: #000; }
+        
+        /* --- Loading Animation --- */
+        #loading-screen { z-index: 100; background: #000; }
+        .loader {
+            width: 80px; height: 80px;
+            border: 5px solid #111; border-top: 5px solid var(--accent);
+            border-radius: 50%; animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- VPN UI --- */
         .status-ring {
-            width: 200px; height: 200px; border-radius: 50%;
-            border: 4px solid #333; display: flex; align-items: center;
-            justify-content: center; cursor: pointer; position: relative;
-            transition: 0.3s;
+            width: 180px; height: 180px; border-radius: 50%;
+            border: 4px solid #222; display: flex; align-items: center;
+            justify-content: center; cursor: pointer; transition: 0.3s;
         }
-        .connected { border-color: var(--accent); box-shadow: 0 0 30px var(--accent); }
-        .power-icon { font-size: 50px; color: #333; }
-        .connected .power-icon { color: var(--accent); }
+        .connected { border-color: var(--accent); box-shadow: 0 0 40px rgba(0,255,136,0.3); }
+        .power-icon { font-size: 50px; color: #222; transition: 0.3s; }
+        .connected .power-icon { color: var(--accent); transform: scale(1.1); }
 
-        .location-box {
-            background: var(--panel); border: 1px solid #333;
-            width: 100%; padding: 15px; border-radius: 12px;
-            margin-top: 40px; text-align: left;
-        }
+        .location-box { background: var(--panel); border: 1px solid #333; width: 100%; padding: 15px; border-radius: 15px; margin-top: 30px; }
+        select { width: 100%; background: #000; color: var(--accent); border: 1px solid #333; padding: 12px; border-radius: 8px; margin-top: 10px; font-weight: bold; outline: none; }
         
-        select {
-            width: 100%; background: #000; color: var(--accent);
-            border: 1px solid var(--accent); padding: 10px; border-radius: 8px; margin-top: 10px;
-        }
-
-        /* --- FINGERPRINT --- */
-        .finger-print { width: 80px; fill: var(--accent); cursor: pointer; }
-        .scan-line { width: 100%; height: 2px; background: var(--accent); position: absolute; top: 0; animation: scan 2s infinite; }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        .premium-badge { background: var(--premium); color: black; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: inline-block; }
     </style>
 </head>
 <body>
 
 <div id="app-container">
-    <div id="unlock-screen" class="screen">
-        <h2 style="color: var(--accent);">JS VPN SECURITY</h2>
-        <p style="color: #888;">Hold to Authenticate</p>
-        <div style="position: relative; overflow: hidden; padding: 10px;">
-            <svg class="finger-print" viewBox="0 0 24 24" onmousedown="startScan()" onmouseup="stopScan()" ontouchstart="startScan()" ontouchend="stopScan()">
-                <path d="M12,1C5.93,1,1,5.93,1,12s4.93,11,11,11,11-4.93,11-11S18.07,1,12,1Zm0,20c-4.41,0-8-3.59-8-8s3.59-8,8-8,8,3.59,8,8-3.59,8-8,8Zm-1-13h2v6h-2v-6Zm0,8h2v2h-2v-2Z"/>
-            </svg>
-            <div id="scanner" class="scan-line hidden"></div>
-        </div>
+    
+    <div id="auth-screen" class="screen">
+        <h2 style="color: var(--accent); letter-spacing: 2px;">JS VPN HUB</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 25px;">Login to unlock Premium Spoofing</p>
+        <input type="text" id="user" class="auth-input" placeholder="Username">
+        <input type="password" id="pass" class="auth-input" placeholder="Password">
+        <button class="btn primary-btn" onclick="startLoading()">CREATE ACCOUNT</button>
+        <p style="font-size: 12px; color: #444; margin-top: 15px;">By joining, you unlock 10+ locations</p>
+    </div>
+
+    <div id="loading-screen" class="screen hidden">
+        <div class="loader"></div>
+        <p id="loading-text" style="color: var(--accent); letter-spacing: 2px; font-size: 12px;">INITIALIZING PROTOCOLS...</p>
     </div>
 
     <div id="vpn-screen" class="screen hidden">
-        <h1 style="color: var(--accent); letter-spacing: 4px;">JS VPN</h1>
-        <p id="conn-status" style="color: #666; margin-bottom: 30px;">DISCONNECTED</p>
+        <div id="premium-tag" class="hidden"><span class="premium-badge">PREMIUM UNLOCKED</span></div>
+        <h1 id="hub-name" style="color: var(--accent); letter-spacing: 4px; margin: 5px 0;">JS VPN</h1>
+        <p id="conn-status" style="color: #444; font-size: 12px; margin-bottom: 30px;">ENCRYPTION IDLE</p>
 
         <div id="toggle-btn" class="status-ring" onclick="toggleVPN()">
             <div class="power-icon">⏻</div>
         </div>
 
         <div class="location-box">
-            <span style="font-size: 12px; color: #888;">SPOOF LOCATION</span>
-            <select id="loc-picker">
+            <span style="font-size: 11px; color: #888; text-transform: uppercase;">Secure Tunnel End-Point</span>
+            <select id="loc-picker" onchange="if(isConnected) updateIP()">
                 <option value="us">United States (Los Angeles)</option>
                 <option value="uk">United Kingdom (London)</option>
-                <option value="jp">Japan (Tokyo)</option>
-                <option value="de">Germany (Frankfurt)</option>
+                <option value="ru" class="prem-opt hidden">Russia (Moscow)</option>
+                <option value="br" class="prem-opt hidden">Brazil (Sao Paulo)</option>
+                <option value="au" class="prem-opt hidden">Australia (Sydney)</option>
+                <option value="jp" class="prem-opt hidden">Japan (Tokyo)</option>
             </select>
         </div>
         
-        <p style="font-size: 10px; color: #444; margin-top: 20px;">IP: <span id="user-ip">192.168.1.1</span></p>
+        <div style="margin-top: 25px; text-align: center;">
+            <p style="font-size: 11px; color: #666; margin: 0;">VIRTUAL IP ADDRESS</p>
+            <p id="user-ip" style="font-size: 18px; font-weight: bold; color: #333; margin: 5px 0;">192.168.1.1</p>
+        </div>
+        
+        <button class="btn" style="background: none; color: #ff4444; font-size: 10px;" onclick="location.reload()">LOGOUT</button>
     </div>
 </div>
 
 <script>
     let isConnected = false;
-    let scanTimeout;
+    let isPremium = false;
+    let rotationInterval;
 
-    function startScan() {
-        document.getElementById('scanner').classList.remove('hidden');
-        scanTimeout = setTimeout(() => {
-            document.getElementById('unlock-screen').classList.add('hidden');
-            document.getElementById('vpn-screen').classList.remove('hidden');
-        }, 1500);
+    const ipData = {
+        us: "104.28.",
+        uk: "45.148.",
+        ru: "95.161.",
+        br: "177.54.",
+        au: "103.25.",
+        jp: "163.43."
+    };
+
+    function startLoading() {
+        const u = document.getElementById('user').value;
+        const p = document.getElementById('pass').value;
+        
+        if (u && p) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('loading-screen').classList.remove('hidden');
+            
+            // Simulation texts
+            const steps = ["BYPASSING FIREWALL...", "INJECTING PACKETS...", "ENCRYPTING TUNNEL...", "PRO HUB READY"];
+            let i = 0;
+            const textEl = document.getElementById('loading-text');
+            
+            const loadInterval = setInterval(() => {
+                textEl.innerText = steps[i];
+                i++;
+                if (i >= steps.length) {
+                    clearInterval(loadInterval);
+                    login(u);
+                }
+            }, 800);
+        } else {
+            alert("Invalid Credentials");
+        }
     }
 
-    function stopScan() {
-        clearTimeout(scanTimeout);
-        document.getElementById('scanner').classList.add('hidden');
+    function login(username) {
+        isPremium = true;
+        document.getElementById('loading-screen').classList.add('hidden');
+        document.getElementById('vpn-screen').classList.remove('hidden');
+        document.getElementById('premium-tag').classList.remove('hidden');
+        document.getElementById('hub-name').innerText = username.toUpperCase() + " VPN";
+        
+        document.querySelectorAll('.prem-opt').forEach(opt => opt.classList.remove('hidden'));
+    }
+
+    function updateIP() {
+        if (!isConnected) return;
+        const loc = document.getElementById('loc-picker').value;
+        const range = ipData[loc] || "10.0.";
+        const newIP = range + Math.floor(Math.random() * 255) + "." + Math.floor(Math.random() * 255);
+        document.getElementById('user-ip').innerText = newIP;
+        document.getElementById('user-ip').style.color = "var(--accent)";
     }
 
     function toggleVPN() {
         isConnected = !isConnected;
         const btn = document.getElementById('toggle-btn');
         const status = document.getElementById('conn-status');
-        const ipDisplay = document.getElementById('user-ip');
 
         if (isConnected) {
             btn.classList.add('connected');
-            status.innerText = "CONNECTED - SECURE";
-            status.style.color = "#00ff88";
-            ipDisplay.innerText = "104.28." + Math.floor(Math.random() * 255) + "." + Math.floor(Math.random() * 255);
-            alert("Location Spoofed to: " + document.getElementById('loc-picker').selectedOptions[0].text);
+            status.innerText = "TUNNEL PROTECTED";
+            status.style.color = "var(--accent)";
+            updateIP();
+            if(isPremium) rotationInterval = setInterval(updateIP, 4000);
         } else {
+            clearInterval(rotationInterval);
             btn.classList.remove('connected');
-            status.innerText = "DISCONNECTED";
-            status.style.color = "#666";
-            ipDisplay.innerText = "192.168.1.1";
+            status.innerText = "ENCRYPTION IDLE";
+            status.style.color = "#444";
+            document.getElementById('user-ip').innerText = "192.168.1.1";
+            document.getElementById('user-ip').style.color = "#333";
         }
-    }
-
-    // Handle "Lost Password" Simulation via console
-    function forgotPass() {
-        alert("Verification link sent to your registered email.");
     }
 </script>
 </body>
