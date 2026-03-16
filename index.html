@@ -3,52 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#00ff88">
-    
     <title>JS VPN PRO</title>
     <style>
-        :root { --bg: #080808; --panel: #121212; --accent: #00ff88; --premium: #f39c12; --text: #fff; }
+        :root { 
+            --bg: #050505; 
+            --panel: rgba(20, 20, 20, 0.95); 
+            --accent: #00ff88; 
+            --premium: #f39c12; 
+            --text: #ffffff;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); margin: 0; overflow: hidden; height: 100vh; }
         
-        .screen { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; transition: 0.5s; background: var(--bg); z-index: 10; }
+        /* --- High End UI Layout --- */
+        .screen { 
+            position: absolute; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; padding: 30px; transition: 0.5s; 
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            z-index: 10; 
+        }
         .hidden { display: none !important; }
 
-        /* --- Auth Style --- */
-        .auth-input { width: 100%; padding: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 10px; margin-bottom: 10px; outline: none; }
-        .auth-input:focus { border-color: var(--accent); }
-        .btn { width: 100%; padding: 15px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .primary-btn { background: var(--accent); color: #000; }
-        
-        /* --- Loading Animation --- */
-        #loading-screen { z-index: 100; background: #000; }
-        .loader {
-            width: 80px; height: 80px;
-            border: 5px solid #111; border-top: 5px solid var(--accent);
-            border-radius: 50%; animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+        .glass-panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            padding: 30px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            text-align: center;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- VPN UI --- */
+        /* --- Auth Styling --- */
+        .auth-input { 
+            width: 100%; padding: 15px; background: rgba(0,0,0,0.5); 
+            border: 1px solid #333; color: white; border-radius: 12px; 
+            margin-bottom: 12px; outline: none; font-size: 14px;
+        }
+        .auth-input:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,255,136,0.2); }
+        
+        .btn { 
+            width: 100%; padding: 16px; border-radius: 50px; border: none; 
+            font-weight: bold; cursor: pointer; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .primary-btn { background: var(--accent); color: #000; box-shadow: 0 5px 15px rgba(0,255,136,0.3); }
+        .secondary-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); margin-top: 10px; }
+        .btn:active { transform: scale(0.96); }
+
+        /* --- VPN Status Ring --- */
         .status-ring {
-            width: 180px; height: 180px; border-radius: 50%;
-            border: 4px solid #222; display: flex; align-items: center;
-            justify-content: center; cursor: pointer; transition: 0.3s;
+            width: 190px; height: 190px; border-radius: 50%;
+            border: 2px solid #222; display: flex; align-items: center;
+            justify-content: center; cursor: pointer; transition: 0.4s;
+            margin: 20px auto;
         }
-        .connected { border-color: var(--accent); box-shadow: 0 0 40px rgba(0,255,136,0.3); }
-        .power-icon { font-size: 50px; color: #222; transition: 0.3s; }
-        .connected .power-icon { color: var(--accent); transform: scale(1.1); }
+        .connected { border-color: var(--accent); box-shadow: 0 0 50px rgba(0,255,136,0.2), inset 0 0 20px rgba(0,255,136,0.1); }
+        .power-icon { font-size: 60px; color: #222; transition: 0.4s; }
+        .connected .power-icon { color: var(--accent); text-shadow: 0 0 20px var(--accent); }
 
-        .location-box { background: var(--panel); border: 1px solid #333; width: 100%; padding: 15px; border-radius: 15px; margin-top: 30px; }
-        select { width: 100%; background: #000; color: var(--accent); border: 1px solid #333; padding: 12px; border-radius: 8px; margin-top: 10px; font-weight: bold; outline: none; }
-        
-        .premium-badge { background: var(--premium); color: black; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: inline-block; }
+        .location-select {
+            width: 100%; background: #000; color: var(--accent);
+            border: 1px solid #333; padding: 14px; border-radius: 12px;
+            font-weight: bold; appearance: none; text-align: center;
+        }
+
+        .premium-tag { 
+            color: var(--premium); font-size: 11px; font-weight: bold; 
+            letter-spacing: 2px; margin-bottom: 5px; 
+        }
     </style>
 </head>
 <body>
@@ -56,97 +85,94 @@
 <div id="app-container">
     
     <div id="auth-screen" class="screen">
-        <h2 style="color: var(--accent); letter-spacing: 2px;">JS VPN HUB</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 25px;">Login to unlock Premium Spoofing</p>
-        <input type="text" id="user" class="auth-input" placeholder="Username">
-        <input type="password" id="pass" class="auth-input" placeholder="Password">
-        <button class="btn primary-btn" onclick="startLoading()">CREATE ACCOUNT</button>
-        <p style="font-size: 12px; color: #444; margin-top: 15px;">By joining, you unlock 10+ locations</p>
-    </div>
-
-    <div id="loading-screen" class="screen hidden">
-        <div class="loader"></div>
-        <p id="loading-text" style="color: var(--accent); letter-spacing: 2px; font-size: 12px;">INITIALIZING PROTOCOLS...</p>
+        <div class="glass-panel">
+            <h2 style="color: var(--accent); margin-top: 0;">JS VPN HUB</h2>
+            <p style="color: #888; font-size: 13px; margin-bottom: 25px;">Unique Identity Protection Active</p>
+            
+            <input type="text" id="user-in" class="auth-input" placeholder="Desired Username">
+            <input type="password" id="pass-in" class="auth-input" placeholder="Secure Password">
+            
+            <button class="btn primary-btn" onclick="validateUser()">Create Unique Account</button>
+            <button class="btn secondary-btn" onclick="skipAuth()">Use Basic Mode</button>
+            
+            <p id="error-msg" style="color: #ff4444; font-size: 11px; margin-top: 15px; font-weight: bold;"></p>
+        </div>
     </div>
 
     <div id="vpn-screen" class="screen hidden">
-        <div id="premium-tag" class="hidden"><span class="premium-badge">PREMIUM UNLOCKED</span></div>
-        <h1 id="hub-name" style="color: var(--accent); letter-spacing: 4px; margin: 5px 0;">JS VPN</h1>
-        <p id="conn-status" style="color: #444; font-size: 12px; margin-bottom: 30px;">ENCRYPTION IDLE</p>
+        <div class="glass-panel">
+            <div id="prem-indicator" class="premium-tag hidden">PRO ACCESS UNLOCKED</div>
+            <h1 id="hub-name" style="margin: 0; font-size: 20px; color: var(--accent);">GUEST VPN</h1>
+            <p id="conn-status" style="color: #555; font-size: 11px; margin-bottom: 15px;">WAITING FOR HANDSHAKE</p>
 
-        <div id="toggle-btn" class="status-ring" onclick="toggleVPN()">
-            <div class="power-icon">⏻</div>
-        </div>
+            <div id="toggle-btn" class="status-ring" onclick="toggleVPN()">
+                <div class="power-icon">⏻</div>
+            </div>
 
-        <div class="location-box">
-            <span style="font-size: 11px; color: #888; text-transform: uppercase;">Secure Tunnel End-Point</span>
-            <select id="loc-picker" onchange="if(isConnected) updateIP()">
-                <option value="us">United States (Los Angeles)</option>
-                <option value="uk">United Kingdom (London)</option>
-                <option value="ru" class="prem-opt hidden">Russia (Moscow)</option>
-                <option value="br" class="prem-opt hidden">Brazil (Sao Paulo)</option>
-                <option value="au" class="prem-opt hidden">Australia (Sydney)</option>
-                <option value="jp" class="prem-opt hidden">Japan (Tokyo)</option>
-            </select>
+            <div style="text-align: left; margin-top: 20px;">
+                <span style="font-size: 10px; color: #666; margin-left: 5px;">LOCATION SPOOFER</span>
+                <select id="loc-picker" class="location-select" onchange="if(isConnected) updateIP()">
+                    <option value="us">United States (Basic)</option>
+                    <option value="uk">United Kingdom (Basic)</option>
+                    <option value="ru" class="prem-opt hidden">Russia (Premium)</option>
+                    <option value="jp" class="prem-opt hidden">Japan (Premium)</option>
+                </option>
+                </select>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <p id="user-ip" style="font-size: 22px; font-weight: bold; color: #222; margin: 0;">192.168.1.1</p>
+                <p style="font-size: 9px; color: #444; margin: 0;">PROTECTED IP ADDRESS</p>
+            </div>
+
+            <button style="background:none; border:none; color:#ff4444; font-size:10px; margin-top:20px; cursor:pointer;" onclick="location.reload()">LOGOUT</button>
         </div>
-        
-        <div style="margin-top: 25px; text-align: center;">
-            <p style="font-size: 11px; color: #666; margin: 0;">VIRTUAL IP ADDRESS</p>
-            <p id="user-ip" style="font-size: 18px; font-weight: bold; color: #333; margin: 5px 0;">192.168.1.1</p>
-        </div>
-        
-        <button class="btn" style="background: none; color: #ff4444; font-size: 10px;" onclick="location.reload()">LOGOUT</button>
     </div>
 </div>
 
 <script>
+    // --- DATABASE SIMULATION ---
+    const takenUsernames = ["jordan", "admin", "owner", "mod"];
     let isConnected = false;
     let isPremium = false;
     let rotationInterval;
 
-    const ipData = {
-        us: "104.28.",
-        uk: "45.148.",
-        ru: "95.161.",
-        br: "177.54.",
-        au: "103.25.",
-        jp: "163.43."
-    };
+    const ipData = { us: "104.28.", uk: "45.148.", ru: "95.161.", jp: "163.43." };
 
-    function startLoading() {
-        const u = document.getElementById('user').value;
-        const p = document.getElementById('pass').value;
-        
-        if (u && p) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('loading-screen').classList.remove('hidden');
-            
-            // Simulation texts
-            const steps = ["BYPASSING FIREWALL...", "INJECTING PACKETS...", "ENCRYPTING TUNNEL...", "PRO HUB READY"];
-            let i = 0;
-            const textEl = document.getElementById('loading-text');
-            
-            const loadInterval = setInterval(() => {
-                textEl.innerText = steps[i];
-                i++;
-                if (i >= steps.length) {
-                    clearInterval(loadInterval);
-                    login(u);
-                }
-            }, 800);
-        } else {
-            alert("Invalid Credentials");
+    function validateUser() {
+        const u = document.getElementById('user-in').value.toLowerCase();
+        const p = document.getElementById('pass-in').value;
+        const err = document.getElementById('error-msg');
+
+        if (!u || !p) {
+            err.innerText = "FILL ALL FIELDS";
+            return;
         }
+
+        if (takenUsernames.includes(u)) {
+            err.innerText = "USERNAME ALREADY TAKEN";
+            return;
+        }
+
+        // Successfully created unique account
+        isPremium = true;
+        enterHub(u);
     }
 
-    function login(username) {
-        isPremium = true;
-        document.getElementById('loading-screen').classList.add('hidden');
+    function skipAuth() {
+        isPremium = false;
+        enterHub("Guest");
+    }
+
+    function enterHub(name) {
+        document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('vpn-screen').classList.remove('hidden');
-        document.getElementById('premium-tag').classList.remove('hidden');
-        document.getElementById('hub-name').innerText = username.toUpperCase() + " VPN";
+        document.getElementById('hub-name').innerText = name.toUpperCase() + " VPN";
         
-        document.querySelectorAll('.prem-opt').forEach(opt => opt.classList.remove('hidden'));
+        if (isPremium) {
+            document.getElementById('prem-indicator').classList.remove('hidden');
+            document.querySelectorAll('.prem-opt').forEach(opt => opt.classList.remove('hidden'));
+        }
     }
 
     function updateIP() {
@@ -165,17 +191,17 @@
 
         if (isConnected) {
             btn.classList.add('connected');
-            status.innerText = "TUNNEL PROTECTED";
+            status.innerText = "ENCRYPTED TUNNEL ACTIVE";
             status.style.color = "var(--accent)";
             updateIP();
-            if(isPremium) rotationInterval = setInterval(updateIP, 4000);
+            if(isPremium) rotationInterval = setInterval(updateIP, 3000);
         } else {
             clearInterval(rotationInterval);
             btn.classList.remove('connected');
-            status.innerText = "ENCRYPTION IDLE";
-            status.style.color = "#444";
+            status.innerText = "WAITING FOR HANDSHAKE";
+            status.style.color = "#555";
             document.getElementById('user-ip').innerText = "192.168.1.1";
-            document.getElementById('user-ip').style.color = "#333";
+            document.getElementById('user-ip').style.color = "#222";
         }
     }
 </script>
