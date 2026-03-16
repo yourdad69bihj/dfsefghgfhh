@@ -4,165 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>TEMP GMAILS</title>
+    <title>JS VPN</title>
     <style>
-        :root { 
-            --bg-color: #080808;
-            --panel-color: #121212;
-            --accent-color: #00ff88;
-            --text-color: #ffffff;
-            --secondary-text: #8a8d9a;
-            --border-color: #333333;
-        }
-
-        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg-color); color: var(--text-color); margin: 0; overflow: hidden; height: 100vh; display: flex; justify-content: center; align-items: center; }
-
-        #app-container { width: 100%; max-width: 420px; height: 100vh; background: var(--bg-color); position: relative; }
-
-        /* --- FAKE GOOGLE LOGIN SCREEN --- */
-        #google-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #ffffff; z-index: 1000; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; padding: 40px; color: #3c4043;
-        }
-        .g-logo { width: 75px; margin-bottom: 20px; }
-        .g-title { font-size: 24px; font-weight: 400; margin-bottom: 10px; color: #202124; }
-        .g-sub { font-size: 16px; margin-bottom: 30px; }
-        .g-input { 
-            width: 100%; padding: 13px 15px; border: 1px solid #dadce0; 
-            border-radius: 4px; font-size: 16px; margin-bottom: 20px; outline: none;
-        }
-        .g-input:focus { border: 2px solid #1a73e8; padding: 12px 14px; }
-        .g-btn { 
-            background: #1a73e8; color: white; border: none; padding: 10px 24px; 
-            border-radius: 4px; font-weight: 500; cursor: pointer; align-self: flex-end;
-        }
-
-        /* --- HUB PASSWORD SCREEN (NEON GREEN) --- */
-        #hub-setup-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); z-index: 999; display: none;
-            flex-direction: column; align-items: center; justify-content: center; padding: 40px;
-        }
-
-        /* --- MAIN APP UI --- */
-        .header { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); }
-        .box { padding: 20px; text-align: center; }
-        #addr-display { 
-            background: #000; padding: 15px; border: 1px solid var(--accent-color);
-            color: var(--accent-color); font-weight: bold; border-radius: 10px; margin-bottom: 20px;
-        }
-        .btn { 
-            width: 100%; padding: 15px; border: none; border-radius: 50px; 
-            font-weight: bold; margin-bottom: 10px; cursor: pointer;
-        }
-        .gen-btn { background: var(--accent-color); color: #000; }
-        .logout-btn { background: none; color: #ff4444; border: 1px solid #ff4444; margin-top: 20px; }
+        :root { --bg: #080808; --panel: #121212; --accent: #00ff88; --text: #fff; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); margin: 0; overflow: hidden; height: 100vh; }
         
+        .screen { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; transition: 0.5s; }
         .hidden { display: none !important; }
+
+        /* --- VPN UI --- */
+        .status-ring {
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 4px solid #333; display: flex; align-items: center;
+            justify-content: center; cursor: pointer; position: relative;
+            transition: 0.3s;
+        }
+        .connected { border-color: var(--accent); box-shadow: 0 0 30px var(--accent); }
+        .power-icon { font-size: 50px; color: #333; }
+        .connected .power-icon { color: var(--accent); }
+
+        .location-box {
+            background: var(--panel); border: 1px solid #333;
+            width: 100%; padding: 15px; border-radius: 12px;
+            margin-top: 40px; text-align: left;
+        }
+        
+        select {
+            width: 100%; background: #000; color: var(--accent);
+            border: 1px solid var(--accent); padding: 10px; border-radius: 8px; margin-top: 10px;
+        }
+
+        /* --- FINGERPRINT --- */
+        .finger-print { width: 80px; fill: var(--accent); cursor: pointer; }
+        .scan-line { width: 100%; height: 2px; background: var(--accent); position: absolute; top: 0; animation: scan 2s infinite; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
     </style>
 </head>
 <body>
 
-    <div id="app-container">
-        <div id="google-screen">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/2560px-Google_2015_logo.svg.png" class="g-logo">
-            <div class="g-title">Sign in</div>
-            <div class="g-sub">Use your Google Account</div>
-            <input type="email" id="g-email" class="g-input" placeholder="Email or phone">
-            <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: #1a73e8; font-weight: 500; font-size: 14px;">Create account</span>
-                <button class="g-btn" onclick="goToPassword()">Next</button>
-            </div>
-        </div>
-
-        <div id="hub-setup-screen">
-            <h2 style="color: var(--accent-color); letter-spacing: 2px;">HUB SECURITY</h2>
-            <p id="welcome-msg" style="color: var(--secondary-text); font-size: 13px;"></p>
-            <input type="password" id="h-pass" class="g-input" placeholder="Set Hub Password" style="background: #000; color: white; border-color: #333;">
-            <button class="btn gen-btn" onclick="completeLogin()">UNLOCK HUB</button>
-        </div>
-
-        <div id="main-app" class="hidden">
-            <div class="header">
-                <h1 id="user-display" style="font-size: 18px; color: var(--accent-color); margin: 0;">JORDAN'S HUB</h1>
-            </div>
-            <div class="box">
-                <div id="addr-display">IDLE</div>
-                <button class="btn gen-btn" onclick="genNew()">GENERATE NEW</button>
-                <button class="btn" style="background: #333; color: white;" onclick="copyAddr()">COPY ADDRESS</button>
-                <button class="btn logout-btn" onclick="logout()">SIGN OUT</button>
-            </div>
+<div id="app-container">
+    <div id="unlock-screen" class="screen">
+        <h2 style="color: var(--accent);">JS VPN SECURITY</h2>
+        <p style="color: #888;">Hold to Authenticate</p>
+        <div style="position: relative; overflow: hidden; padding: 10px;">
+            <svg class="finger-print" viewBox="0 0 24 24" onmousedown="startScan()" onmouseup="stopScan()" ontouchstart="startScan()" ontouchend="stopScan()">
+                <path d="M12,1C5.93,1,1,5.93,1,12s4.93,11,11,11,11-4.93,11-11S18.07,1,12,1Zm0,20c-4.41,0-8-3.59-8-8s3.59-8,8-8,8,3.59,8,8-3.59,8-8,8Zm-1-13h2v6h-2v-6Zm0,8h2v2h-2v-2Z"/>
+            </svg>
+            <div id="scanner" class="scan-line hidden"></div>
         </div>
     </div>
 
-    <script>
-        // --- AUTH SIMULATION ---
-        function goToPassword() {
-            const email = document.getElementById('g-email').value;
-            if (email.includes('@')) {
-                document.getElementById('google-screen').style.display = 'none';
-                document.getElementById('hub-setup-screen').style.display = 'flex';
-                document.getElementById('welcome-msg').innerText = "Logged in as " + email;
-                sessionStorage.setItem('temp_user', email);
-            } else {
-                alert("Enter a valid email");
-            }
-        }
+    <div id="vpn-screen" class="screen hidden">
+        <h1 style="color: var(--accent); letter-spacing: 4px;">JS VPN</h1>
+        <p id="conn-status" style="color: #666; margin-bottom: 30px;">DISCONNECTED</p>
 
-        function completeLogin() {
-            const pass = document.getElementById('h-pass').value;
-            if (pass.length > 3) {
-                const email = sessionStorage.getItem('temp_user');
-                localStorage.setItem('hub_user', email);
-                localStorage.setItem('hub_logged_in', 'true');
-                showMainApp(email);
-            } else {
-                alert("Password too short!");
-            }
-        }
+        <div id="toggle-btn" class="status-ring" onclick="toggleVPN()">
+            <div class="power-icon">⏻</div>
+        </div>
 
-        function showMainApp(email) {
-            document.getElementById('google-screen').classList.add('hidden');
-            document.getElementById('hub-setup-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('user-display').innerText = email.split('@')[0].toUpperCase() + "'S HUB";
-        }
+        <div class="location-box">
+            <span style="font-size: 12px; color: #888;">SPOOF LOCATION</span>
+            <select id="loc-picker">
+                <option value="us">United States (Los Angeles)</option>
+                <option value="uk">United Kingdom (London)</option>
+                <option value="jp">Japan (Tokyo)</option>
+                <option value="de">Germany (Frankfurt)</option>
+            </select>
+        </div>
+        
+        <p style="font-size: 10px; color: #444; margin-top: 20px;">IP: <span id="user-ip">192.168.1.1</span></p>
+    </div>
+</div>
 
-        function logout() {
-            localStorage.clear();
-            location.reload();
-        }
+<script>
+    let isConnected = false;
+    let scanTimeout;
 
-        // --- MAIL API LOGIC ---
-        const API = "https://api.mail.tm";
-        let currentAddr = "";
+    function startScan() {
+        document.getElementById('scanner').classList.remove('hidden');
+        scanTimeout = setTimeout(() => {
+            document.getElementById('unlock-screen').classList.add('hidden');
+            document.getElementById('vpn-screen').classList.remove('hidden');
+        }, 1500);
+    }
 
-        async function genNew() {
-            document.getElementById('addr-display').innerText = "GENERATING...";
-            try {
-                const domRes = await fetch(API + "/domains");
-                const domData = await domRes.json();
-                const domain = domData['hydra:member'][0].domain;
-                currentAddr = "vlc_" + Math.random().toString(36).substring(7) + "@" + domain;
-                document.getElementById('addr-display').innerText = currentAddr;
-            } catch (e) {
-                document.getElementById('addr-display').innerText = "ERROR";
-            }
-        }
+    function stopScan() {
+        clearTimeout(scanTimeout);
+        document.getElementById('scanner').classList.add('hidden');
+    }
 
-        function copyAddr() {
-            navigator.clipboard.writeText(currentAddr);
-            alert("Copied!");
-        }
+    function toggleVPN() {
+        isConnected = !isConnected;
+        const btn = document.getElementById('toggle-btn');
+        const status = document.getElementById('conn-status');
+        const ipDisplay = document.getElementById('user-ip');
 
-        // --- ON LOAD ---
-        window.onload = () => {
-            if (localStorage.getItem('hub_logged_in') === 'true') {
-                showMainApp(localStorage.getItem('hub_user'));
-            }
+        if (isConnected) {
+            btn.classList.add('connected');
+            status.innerText = "CONNECTED - SECURE";
+            status.style.color = "#00ff88";
+            ipDisplay.innerText = "104.28." + Math.floor(Math.random() * 255) + "." + Math.floor(Math.random() * 255);
+            alert("Location Spoofed to: " + document.getElementById('loc-picker').selectedOptions[0].text);
+        } else {
+            btn.classList.remove('connected');
+            status.innerText = "DISCONNECTED";
+            status.style.color = "#666";
+            ipDisplay.innerText = "192.168.1.1";
         }
-    </script>
+    }
+
+    // Handle "Lost Password" Simulation via console
+    function forgotPass() {
+        alert("Verification link sent to your registered email.");
+    }
+</script>
 </body>
 </html>
